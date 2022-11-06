@@ -1,26 +1,6 @@
 # base
 
-A Clojure(Script) starter template made for myself to support rapid app development.
-
-## Stack:
-
-### Backend
-
-- Integrant
-- Undertow
-- Ring
-- Reitit
-- HugSQL 
-- conman
-- migratus
-
-### Frontend
-
-- Integrant
-- shadow-cljs
-- reagent
-- re-frame
-- re-frame-10x
+A Clojure(Script) starter template made for myself to support rapid app development. Heavily inspired / copied from [clj-kit](https://clj-kit.github.io/).
 
 ## Usage
 
