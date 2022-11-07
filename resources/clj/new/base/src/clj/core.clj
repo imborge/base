@@ -9,7 +9,8 @@
    [<<ns-name>>.db.postgres]
    [<<ns-name>>.web.undertow]
    [<<ns-name>>.web.handler]
-   [<<ns-name>>.web.routes.api]))
+   [<<ns-name>>.web.routes.api] <% if frontend? %>
+   [<<ns-name>>.web.routes.pages] <% endif %>))
 
 ;; log uncaught exceptions in threads
 (Thread/setDefaultUncaughtExceptionHandler

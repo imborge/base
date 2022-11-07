@@ -18,57 +18,99 @@
        (take n)
        (apply str)))
 
+(def available-features #{"+cljs" "+frontend"})
+
+(def feature-dependencies
+  {"+cljs" #{"+frontend"}})
+
+(def core-files
+  {".dir-locals.el" ".dir-locals.el"
+   ".gitignore"     ".gitignore"
+
+   "Makefile"  "Makefile"
+   "deps.edn"  "deps.edn"
+   "build.clj" "build.clj"
+   "README.md" "README.md"
+
+   "env/dev/clj/{{sanitized}}/dev_middleware.clj" "env/dev/clj/dev_middleware.clj"
+   "env/dev/clj/{{sanitized}}/env.clj"            "env/dev/clj/env.clj"
+   "env/dev/clj/user.clj"                         "env/dev/clj/user.clj"
+   "env/dev/resources/logback.xml"                "env/dev/resources/logback.xml"
+
+   "env/test/resources/logback.xml" "env/test/resources/logback.xml"
+
+   "env/prod/clj/{{sanitized}}/env.clj" "env/prod/clj/env.clj"
+   "env/prod/resources/logback.xml"     "env/prod/resources/logback.xml"
+
+   "resources/system.edn"                 "resources/system.edn"
+   "resources/migrations/placeholder.txt" "resources/migrations/placeholder.txt"
+   "resources/sql/queries.sql"            "resources/sql/queries.sql"
+
+   "src/clj/{{sanitized}}/config.clj"   "src/clj/config.clj"
+   "src/clj/{{sanitized}}/core.clj"     "src/clj/core.clj"
+   "src/clj/{{sanitized}}/ig_utils.clj" "src/clj/ig_utils.clj"
+
+   "src/clj/{{sanitized}}/db/conman.clj"   "src/clj/db/conman.clj"
+   "src/clj/{{sanitized}}/db/postgres.clj" "src/clj/db/postgres.clj"
+   "src/clj/{{sanitized}}/db/migratus.clj" "src/clj/db/migratus.clj"
+
+   "src/clj/{{sanitized}}/web/handler.clj"              "src/clj/web/handler.clj"
+   "src/clj/{{sanitized}}/web/undertow.clj"             "src/clj/web/undertow.clj"
+   "src/clj/{{sanitized}}/web/controllers/health.clj"   "src/clj/web/controllers/health.clj"
+   "src/clj/{{sanitized}}/web/middleware/core.clj"      "src/clj/web/middleware/core.clj"
+   "src/clj/{{sanitized}}/web/middleware/exception.clj" "src/clj/web/middleware/exception.clj"
+   "src/clj/{{sanitized}}/web/middleware/formats.clj"   "src/clj/web/middleware/formats.clj"
+   "src/clj/{{sanitized}}/web/routes/api.clj"           "src/clj/web/routes/api.clj"
+   "src/clj/{{sanitized}}/web/routes/utils.clj"         "src/clj/web/routes/utils.clj"
+
+   "test/clj/{{sanitized}}/test_utils.clj" "test/clj/test_utils.clj"
+   "test/clj/{{sanitized}}/core_test.clj"  "test/clj/core_test.clj"})
+
+(def frontend-files
+  {"tailwind.config.js"                         "tailwind.config.js"
+   "src/clj/{{sanitized}}/web/routes/pages.clj" "src/clj/web/routes/pages.clj"
+   "src/clj/{{sanitized}}/web/pages/layout.clj" "src/clj/web/pages/layout.clj"
+   "resources/public/css/screen.css"            "resources/public/css/screen.css"})
+
+(def cljs-files
+  {"package.json"    "package.json"
+   "shadow-cljs.edn" "shadow-cljs.edn"
+
+   "src/cljs/{{sanitized}}/core.cljs" "src/cljs/core.cljs"})
+
+(defn render-files [files-map render-fn options]
+  (apply ->files options (map
+                          (fn [[dest-filename src-filename]]
+                            [dest-filename (render-fn src-filename options)])
+                          files-map)))
+
+(defn resolve-feature-dependencies [features dependencies]
+  (set (mapcat (fn [feature]
+                 (if-let [feature-dependencies (get dependencies feature)]
+                   (into [feature] (mapcat #(resolve-feature-dependencies % dependencies)
+                                           [feature-dependencies]))
+                   [feature]))
+               features)))
+
 (defn base
   [name & feature-params]
   (let [render  (renderer "base" render-template)
+        options {:full-name             name
+                 :name                  (project-name name)
+                 :ns-name               (sanitize-ns name)
+                 :sanitized             (name-to-path name)
+                 :default-cookie-secret (rand-str 16)
+                 :year                  (year)
+                 :features              (resolve-feature-dependencies feature-params feature-dependencies)}
         options (merge
-                 {:full-name             name
-                  :name                  (project-name name)
-                  :ns-name               (sanitize-ns name)
-                  :sanitized             (name-to-path name)
-                  :default-cookie-secret (rand-str 16)
-                  :year                  (year)
-                  :features              (set feature-params)})]
-    (println "Generating fresh 'clj new' imborge/base project")
-    (println "with these features:" (:features options))
-    (->files options
-             [".dir-locals.el" (render ".dir-locals.el" options)]
-             [".gitignore" (render ".gitignore" options)]
-             
-             ["deps.edn" (render "deps.edn" options)]
-             ["build.clj" (render "build.clj" options)]
-             ["README.md" (render "README.md" options)]
+                 options
+                 {:cljs?     (some #{"+cljs"} (:feaures options))
+                  :frontend? (some #{"+frontend"} (:feaures options))})
 
-             ["env/dev/clj/{{sanitized}}/dev_middleware.clj" (render "env/dev/clj/dev_middleware.clj" options)]
-             ["env/dev/clj/{{sanitized}}/env.clj" (render "env/dev/clj/env.clj" options)]
-             ["env/dev/clj/user.clj" (render "env/dev/clj/user.clj" options)]
-             ["env/dev/resources/logback.xml" (render "env/dev/resources/logback.xml" options)]
-
-             ["env/test/resources/logback.xml" (render "env/test/resources/logback.xml" options)]
-
-             ["env/prod/clj/{{sanitized}}/env.clj" (render "env/prod/clj/env.clj" options)]
-             ["env/prod/resources/logback.xml" (render "env/prod/resources/logback.xml" options)]
-
-             ["resources/system.edn" (render "resources/system.edn" options)]
-             ["resources/migrations/placeholder.txt" (render "resources/migrations/placeholder.txt" options)]
-             ["resources/sql/queries.sql" (render "resources/sql/queries.sql")]
-
-             ["src/clj/{{sanitized}}/config.clj" (render "src/clj/config.clj" options)]
-             ["src/clj/{{sanitized}}/core.clj" (render "src/clj/core.clj" options)]
-             ["src/clj/{{sanitized}}/ig_utils.clj" (render "src/clj/ig_utils.clj" options)]
-
-             ["src/clj/{{sanitized}}/db/conman.clj" (render "src/clj/db/conman.clj" options)]
-             ["src/clj/{{sanitized}}/db/postgres.clj" (render "src/clj/db/postgres.clj" options)]
-             ["src/clj/{{sanitized}}/db/migratus.clj" (render "src/clj/db/migratus.clj" options)]
-             
-             ["src/clj/{{sanitized}}/web/handler.clj" (render "src/clj/web/handler.clj" options)]
-             ["src/clj/{{sanitized}}/web/undertow.clj" (render "src/clj/web/undertow.clj" options)]
-             ["src/clj/{{sanitized}}/web/controllers/health.clj" (render "src/clj/web/controllers/health.clj" options)]
-             ["src/clj/{{sanitized}}/web/middleware/core.clj" (render "src/clj/web/middleware/core.clj" options)]
-             ["src/clj/{{sanitized}}/web/middleware/exception.clj" (render "src/clj/web/middleware/exception.clj" options)]
-             ["src/clj/{{sanitized}}/web/middleware/formats.clj" (render "src/clj/web/middleware/formats.clj" options)]
-             ["src/clj/{{sanitized}}/web/routes/api.clj" (render "src/clj/web/routes/api.clj" options)]
-             ["src/clj/{{sanitized}}/web/routes/utils.clj" (render "src/clj/web/routes/utils.clj" options)]
-
-             ["test/clj/{{sanitized}}/test_utils.clj" (render "test/clj/test_utils.clj" options)]
-             ["test/clj/{{sanitized}}/core_test.clj" (render "test/clj/core_test.clj" options)])))
+        files (merge
+               core-files
+               (when (:cljs? options)
+                 cljs-files))]
+    (println "Generating 'imborge/base' project using these features:"
+             (:features options))
+    (render-files files render options)))

@@ -1,6 +1,7 @@
 (ns build
   (:require [clojure.string :as string]
             [clojure.tools.build.api :as b]
+            [clojure.java.shell :refer [sh]]
             [deps-deploy.deps-deploy :as deploy]))
 
 (def lib '<<full-name>>)
@@ -25,13 +26,21 @@
                 :basis basis
                 :src-dirs ["src/clj"]})
   (b/copy-dir {:src-dirs ["src/clj" "resources" "env/prod/clj"]
-               :target-dir class-dir}))
+               :target-dir class-dir})) <% if cljs? %>
+
+(defn build-cljs [_]
+  (println "npx shadow-cljs release app...")
+  (let [{:keys [exit] :as s} (sh "npx" "shadow-cljs" "release" "app")]
+    (when-not (zero? exit)
+      (throw (ex-info "could not compile cljs" s))))) <% endif %>
 
 (defn uber [_]
   (println "Compiling Clojure...")
   (b/compile-clj {:basis basis
                   :src-dirs ["src/clj" "env/prod/clj"]
-                  :class-dir class-dir})
+                  :class-dir class-dir}) <% if cljs? %>
+  (println "Compiling ClojureScript...")
+  (build-cljs nil) <% endif %>
   (println "Making uberjar...")
   (b/uber {:class-dir class-dir
            :uber-file uber-file

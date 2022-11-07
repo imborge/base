@@ -1,18 +1,21 @@
-{:paths ["src/clj"
+{:paths ["src/clj" <% if cljs? %>
+         "src/cljs" <% endif %>
          "resources"]
 
  :deps {org.clojure/clojure            {:mvn/version "1.11.1"}
         org.clojure/tools.logging      {:mvn/version "1.2.4"}
         ch.qos.logback/logback-classic {:mvn/version "1.4.4"}
 
-        ;; Routing
         metosin/reitit {:mvn/version "0.5.18"}
 
-        ;; Ring
         metosin/ring-http-response    {:mvn/version "0.9.3"}
         ring/ring-core                {:mvn/version "1.9.5"}
         ring/ring-defaults            {:mvn/version "0.3.3"}
-        luminus/ring-undertow-adapter {:mvn/version "1.2.6"}
+        luminus/ring-undertow-adapter {:mvn/version "1.2.6"} <% if frontend? %>
+
+        ;; Frontend
+        hiccup/hiccup                 {:mvn/version "1.0.5"}
+        luminus/ring-ttl-session      {:mvn/version "0.3.3"} <% endif %>
 
         ;; Db
         org.postgresql/postgresql {:mvn/version "42.3.4"}
@@ -42,7 +45,11 @@
                          ring/ring-mock                {:mvn/version "0.4.0"}
                          org.clojure/tools.namespace   {:mvn/version "1.2.0"}}
 
-            :extra-paths ["env/dev/clj" "env/dev/resources" "test/clj"]
+            :extra-paths ["env/dev/clj"
+                          "env/dev/resources"
+                          "test/clj" <% if cljs? %>
+
+                          "target/classes/cljsbuild" <% endif %>]
 
             :main-opts ["-m" "nrepl.cmdline" "--middleware"
                         "[refactor-nrepl.middleware/wrap-refactor]" "-i"]}
