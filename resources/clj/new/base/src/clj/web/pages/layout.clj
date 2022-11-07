@@ -8,7 +8,8 @@
    [ring.util.response]))
 
 (defn base
-  [title & content]
+  [{:keys [title]
+    :as opts} & content]
   (html5
    [:head
     [:title title]

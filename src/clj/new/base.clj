@@ -3,7 +3,8 @@
    [clj.new.templates :refer [->files name-to-path year
                               sanitize-ns project-name
                               renderer]]
-   [selmer.parser :as selmer]))
+   [selmer.parser :as selmer]
+   [clojure.pprint]))
 
 (defn render-template
   [template options]
@@ -104,13 +105,17 @@
                  :features              (resolve-feature-dependencies feature-params feature-dependencies)}
         options (merge
                  options
-                 {:cljs?     (some #{"+cljs"} (:feaures options))
-                  :frontend? (some #{"+frontend"} (:feaures options))})
+                 {:cljs?     (some #{"+cljs"} (:features options))
+                  :frontend? (some #{"+frontend"} (:features options))})
 
         files (merge
                core-files
+               (when (:frontend? options)
+                 frontend-files)
                (when (:cljs? options)
                  cljs-files))]
     (println "Generating 'imborge/base' project using these features:"
              (:features options))
+    (println "Options:")
+    (clojure.pprint/pprint options)
     (render-files files render options)))
