@@ -3,7 +3,8 @@
     [cheshire.core :as cheshire]
     [next.jdbc]
     [next.jdbc.prepare :as prepare]
-    [next.jdbc.result-set :as result-set])
+    [next.jdbc.result-set :as result-set]
+    [java-time.api :as jt])
   (:import
     [clojure.lang IPersistentMap]
     [java.sql Array PreparedStatement Timestamp]
@@ -40,7 +41,11 @@
 
   PGobject
   (read-column-by-label [^PGobject v _] (<-pgobject v))
-  (read-column-by-index [^PGobject v _2 _3] (<-pgobject v)))
+  (read-column-by-index [^PGobject v _2 _3] (<-pgobject v))
+
+  Timestamp
+  (read-column-by-label [^Timestamp v _] (jt/instant v))
+  (read-column-by-index [^Timestamp v _2 _3] (jt/instant v)))
 
 (extend-protocol prepare/SettableParameter
   Instant

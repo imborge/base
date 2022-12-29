@@ -6,7 +6,8 @@
         org.clojure/tools.logging      {:mvn/version "1.2.4"}
         ch.qos.logback/logback-classic {:mvn/version "1.4.4"}
 
-        metosin/reitit {:mvn/version "0.5.18"}
+        clojure.java-time/clojure.java-time {:mvn/version "1.1.0"}
+        metosin/reitit                      {:mvn/version "0.5.18"}
 
         metosin/ring-http-response    {:mvn/version "0.9.3"}
         ring/ring-core                {:mvn/version "1.9.5"}
@@ -14,8 +15,8 @@
         luminus/ring-undertow-adapter {:mvn/version "1.2.6"} <% if frontend? %>
 
         ;; Frontend
-        hiccup/hiccup                 {:mvn/version "1.0.5"}
-        luminus/ring-ttl-session      {:mvn/version "0.3.3"} <% endif %>
+        hiccup/hiccup            {:mvn/version "1.0.5"}
+        luminus/ring-ttl-session {:mvn/version "0.3.3"} <% endif %>
 
         ;; Db
         org.postgresql/postgresql {:mvn/version "42.3.4"}
